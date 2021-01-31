@@ -3,11 +3,16 @@ package xyz.heptadecane;
 import java.util.ArrayList;
 
 public abstract class Scheduler {
-    private ArrayList<Process> processes;
-    private int currentTime;
+    protected ArrayList<Process> processes;
+    protected int currentTime;
 
-    protected void moveTimer(int time){
-        currentTime = currentTime + time;
+    public Scheduler(ArrayList<Process> processes) {
+        this.processes = processes;
+        this.currentTime = 0;
+    }
+
+    protected void moveTimer(int clicks){
+        currentTime = currentTime + clicks;
     }
 
     protected boolean isQueueEmpty(){

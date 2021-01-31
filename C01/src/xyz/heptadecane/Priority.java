@@ -2,25 +2,28 @@ package xyz.heptadecane;
 
 import java.util.ArrayList;
 
-public class FCFS extends Scheduler {
+public class Priority extends Scheduler{
 
-    public FCFS(ArrayList<Process> processes) {
+    public Priority(ArrayList<Process> processes) {
         super(processes);
     }
 
     @Override
-    protected Process selectProcess(){
+    protected Process selectProcess() {
         Process selected = null;
-        for(Process process:processes){
+        for(Process process : processes){
             if(!process.isCompleted() && currentTime>=process.getArrivalTime()){
                 if(selected == null)
                     selected = process;
                 else {
-                    if (process.getArrivalTime() < selected.getArrivalTime())
+                    if(process.getPriority() < selected.getPriority())
                         selected = process;
-                    else if (process.getArrivalTime() == selected.getArrivalTime())
-                        if (process.getId() < selected.getId())
+                    else if(process.getPriority() == selected.getPriority())
+                        if(process.getArrivalTime() < selected.getArrivalTime())
                             selected = process;
+                        else if(process.getArrivalTime() == selected.getArrivalTime())
+                            if(process.getId() < selected.getId())
+                                selected = process;
                 }
             }
         }
@@ -28,8 +31,8 @@ public class FCFS extends Scheduler {
     }
 
     @Override
-    public void execute(){
-        while(!isQueueEmpty()){
+    public void execute() {
+        while (!isQueueEmpty()){
             Process process = selectProcess();
             if(process == null)
                 moveTimer(1);

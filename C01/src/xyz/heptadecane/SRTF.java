@@ -37,12 +37,17 @@ public class SRTF extends Scheduler {
     }
 
     @Override
-    public void execute() {
+    public String execute() {
+        String chart = "";
         while (!isQueueEmpty()){
+            chart += currentTime+" ";
             Process process = selectProcess();
-            if(process == null)
+            if(process == null) {
+                chart += "[ ] ";
                 moveTimer(1);
+            }
             else {
+                chart += "[P"+process.getId()+"] ";
                 if(!process.isResponded())
                     process.setResponseTime(currentTime);
                 int remainingTime = timeMap.get(process.getId()) - 1;
@@ -52,5 +57,7 @@ public class SRTF extends Scheduler {
                     process.setCompletionTime(currentTime);
             }
         }
+        chart += currentTime+"\n";
+        return chart;
     }
 }

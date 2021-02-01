@@ -35,15 +35,20 @@ public class RoundRobin extends Scheduler{
     }
 
     @Override
-    public void execute() {
+    public String execute() {
+        String chart = "";
         while (!isQueueEmpty()){
+            chart += currentTime+" ";
             Process process = selectProcess();
             if(context != null)
                 readyQueue.add(context);
 
-            if(process == null)
+            if(process == null) {
+                chart += "[ ] ";
                 moveTimer(1);
+            }
             else {
+                chart += "[P"+process.getId()+"] ";
                 if(!process.isResponded())
                     process.setResponseTime(currentTime);
                 int remainingTime = remainingTimeMap.get(process.getId());
@@ -59,9 +64,9 @@ public class RoundRobin extends Scheduler{
                 else
                     context = process;
             }
-
         }
-
+        chart += currentTime+"\n";
+        return chart;
     }
 
      static class ProcessArrivalComparator implements Comparator<Process>{

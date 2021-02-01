@@ -28,17 +28,24 @@ public class FCFS extends Scheduler {
     }
 
     @Override
-    public void execute(){
+    public String execute(){
+        String chart = "";
         while(!isQueueEmpty()){
+            chart += currentTime+" ";
             Process process = selectProcess();
-            if(process == null)
+            if(process == null) {
+                chart += "[ ] ";
                 moveTimer(1);
+            }
             else {
+                chart += "[P"+process.getId()+"] ";
                 if(!process.isResponded())
                     process.setResponseTime(currentTime);
                 moveTimer(process.getCpuTime());
                 process.setCompletionTime(currentTime);
             }
         }
+        chart += currentTime+"\n";
+        return chart;
     }
 }

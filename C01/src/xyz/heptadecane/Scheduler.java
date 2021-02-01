@@ -23,5 +23,5 @@ public abstract class Scheduler {
     }
 
     protected abstract Process selectProcess();
-    public abstract void execute();
+    public abstract String execute();
 }

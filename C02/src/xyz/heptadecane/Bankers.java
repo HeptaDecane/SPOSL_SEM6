@@ -1,5 +1,7 @@
 package xyz.heptadecane;
 
+import java.util.ArrayList;
+
 public class Bankers {
     private final int n, m;
     private final int[][] max;
@@ -7,6 +9,7 @@ public class Bankers {
     private final int[] available;
     private final int[][] need;
     private final int[] executionSequence;
+    private final ArrayList<int[]> work;
 
     public Bankers(int n, int m, int[][] max, int[][] allocated, int[] available) {
         this.n = n;
@@ -16,10 +19,29 @@ public class Bankers {
         this.available = available;
         this.need = new int[n][m];
         this.executionSequence = new int[n];
+        this.work = new ArrayList<>();
+
+        for(int i=0; i<n; i++)
+            executionSequence[i] = -1;
 
         for(int i=0; i<n; i++)
             for(int j=0; j<m; j++)
                 need[i][j] = max[i][j] - allocated[i][j];
+
+        for(int i=0; i<n; i++)
+            for(int j=0; j<m; j++)
+                available[j] = available[j] - allocated[i][j];
+
+        work.add(available.clone());
+
+    }
+
+    public ArrayList<int[]> getWork() {
+        return work;
+    }
+
+    public int[][] getNeed() {
+        return need;
     }
 
     public int[] getExecutionSequence() {
@@ -44,11 +66,13 @@ public class Bankers {
                     for(int j=0; j<m; j++)
                         available[j] = available[j] + allocated[i][j];
 
+                    work.add(available.clone());
+
                     count++;
                 }
             }
             if(deadLock)
-                return null;
+                return executionSequence;
         }
         return executionSequence;
     }

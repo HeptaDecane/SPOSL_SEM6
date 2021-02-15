@@ -3,9 +3,9 @@ package xyz.heptadecane;
 public class Main {
     public static void main(String[] args) {
 
-        PassOne passOne = new PassOne("input.asm");
+        Assembler assembler = new Assembler("input.asm");
         try {
-            passOne.parseFile();
+            assembler.passOne();
         } catch (Exception e) {
             e.printStackTrace();
         }

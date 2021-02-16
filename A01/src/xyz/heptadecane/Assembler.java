@@ -1,8 +1,9 @@
 package xyz.heptadecane;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.util.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class Assembler {
     private final Map<String, Integer> symbolTable;
@@ -24,6 +25,22 @@ public class Assembler {
         poolTable = new ArrayList<>();
         poolPointer = 0;
         code = "";
+    }
+
+    public Map<String, Integer> getSymbolTable() {
+        return symbolTable;
+    }
+
+    public Map<String, Integer> getLiteralTable() {
+        return literalTable;
+    }
+
+    public ArrayList<Integer> getPoolTable() {
+        return poolTable;
+    }
+
+    public String getCode() {
+        return code;
     }
 
     public void setFile(String file) {
@@ -143,32 +160,61 @@ public class Assembler {
                 locationCounter++;
             break;
             default:
-                throw new Exception("Invalid Instruction Type");
+                throw new Exception(instruction+":invalid instruction type");
         }
     }
 
     public void passOne() throws Exception {
+        if(file == null)
+            throw new FileNotFoundException("no input file");
+
         initializeLocationCounter();
 
         String line;
-        BufferedReader reader = new BufferedReader(new FileReader(file));
+        BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
 
-        while ((line=reader.readLine())!=null){
+        while ((line=bufferedReader.readLine())!=null){
             interpret(line);
         }
-        reader.close();
-        System.out.println(code);
-        for (String literal: literalTable.keySet())
-            System.out.println(literal+", "+literalTable.get(literal));
-        System.out.println();
-        for (String literal: symbolTable.keySet())
-            System.out.println(literal+", "+symbolTable.get(literal));
-        System.out.println();
-        for(int i: poolTable)
-            System.out.println(i);
+        bufferedReader.close();
+        generateOutput();
     }
 
-    void updateLiteralTable(boolean end){
+    private void generateOutput() throws Exception{
+        BufferedWriter bufferedWriter = null;
+        int index = 0;
+
+        bufferedWriter = new BufferedWriter(new FileWriter("INTERMEDIATE_CODE.txt"));
+        bufferedWriter.write(code);
+        bufferedWriter.close();
+
+        index = 1;
+        bufferedWriter = new BufferedWriter(new FileWriter("SYMBOL_TABLE.txt"));
+        for(String key: symbolTable.keySet()) {
+            bufferedWriter.write(index+"\t"+key+"\t"+symbolTable.get(key)+"\n");
+            index++;
+        }
+        bufferedWriter.close();
+
+        index = 1;
+        bufferedWriter = new BufferedWriter(new FileWriter("LITERAL_TABLE.txt"));
+        for(String key: literalTable.keySet()){
+            bufferedWriter.write(index+"\t"+key+"\t"+literalTable.get(key)+"\n");
+            index++;
+        }
+        bufferedWriter.close();
+
+        index = 1;
+        bufferedWriter = new BufferedWriter(new FileWriter("POOL_TABLE.txt"));
+        for(Integer pointer: poolTable) {
+            bufferedWriter.write(index+"\t#"+pointer+"\n");
+            index++;
+        }
+        bufferedWriter.close();
+
+    }
+
+    private void updateLiteralTable(boolean end){
         int index = 0;
         for(String literal : literalTable.keySet()){
             if(poolPointer == index){
@@ -184,7 +230,9 @@ public class Assembler {
         }
     }
 
-    int evaluate(String expression){
+
+
+    private int evaluate(String expression){
         if(expression.contains("+")){
             String[] tokens = expression.split("\\+");
             return symbolTable.get(tokens[0]) + Integer.parseInt(tokens[1]);
@@ -202,7 +250,7 @@ public class Assembler {
         }
     }
 
-    int getTableIndex(String entry, Map<String, Integer> table){
+    private int getTableIndex(String entry, Map<String, Integer> table){
         int index = 0;
         for(String key : table.keySet()){
             if(key.equals(entry))

@@ -8,6 +8,8 @@ import java.util.Map;
 public class Assembler {
     private final Map<String, Integer> symbolTable;
     private final Map<String, Integer> literalTable;
+    private final ArrayList<Map<String,Integer>> litTab;
+    private Map<String, Integer> currentPool;
     private final ArrayList<Integer> poolTable;
     private String file;
     private String code;
@@ -22,8 +24,10 @@ public class Assembler {
         this.file = file;
         symbolTable = new LinkedHashMap<>();
         literalTable = new LinkedHashMap<>();
+        litTab = new ArrayList<>();
+        currentPool = new LinkedHashMap<>();
         poolTable = new ArrayList<>();
-        poolPointer = 0;
+        poolPointer = 1;
         code = "";
     }
 
@@ -71,26 +75,26 @@ public class Assembler {
                     code = code + String.format("(AD,01)\t(C,%s)\n",locationCounter);
                 }
                 else if(instruction.equals("END")){
-                    poolTable.add(poolPointer+1);
-                    updateLiteralTable(true);
+                    poolTable.add(poolPointer);
+                    updateLiteralTable();
                     code = code + "(AD,02)\n";
                 }
                 else if(instruction.equals("ORIGIN")){
                     String expression = tokens[2];
                     if(expression.contains("+")){
                         String[] parts = expression.split("\\+");
-                        code = code + String.format("(AD,03)\t(S,%02d)+%s\n",getTableIndex(parts[0],symbolTable),parts[1]);
+                        code = code + String.format("(AD,03)\t(S,%02d)+%s\n",getSymbolIndex(parts[0]),parts[1]);
                     }
                     else if(expression.contains("-")){
                         String[] parts = expression.split("-");
-                        code = code + String.format("(AD,03)\t(S,%02d)-%s\n",getTableIndex(parts[0],symbolTable),parts[1]);
+                        code = code + String.format("(AD,03)\t(S,%02d)-%s\n",getSymbolIndex(parts[0]),parts[1]);
                     }
                     else {
                         try{
                             Integer.parseInt(expression);
                             code = code + String.format("(AD,03)\t(C,%s)\n",expression);
                         } catch (NumberFormatException e){
-                            code = code + String.format("(AD,03)\t(S,%02d)\n",getTableIndex(expression,symbolTable));
+                            code = code + String.format("(AD,03)\t(S,%02d)\n",getSymbolIndex(expression));
                         }
                     }
                     locationCounter = evaluate(expression);
@@ -99,25 +103,25 @@ public class Assembler {
                     String expression = tokens[2];
                     if(expression.contains("+")){
                         String[] parts = expression.split("\\+");
-                        code = code + String.format("(AD,04)\t(S,%02d)+%s\n",getTableIndex(parts[0],symbolTable),parts[1]);
+                        code = code + String.format("(AD,04)\t(S,%02d)+%s\n",getSymbolIndex(parts[0]),parts[1]);
                     }
                     else if(expression.contains("-")){
                         String[] parts = expression.split("-");
-                        code = code + String.format("(AD,04)\t(S,%02d)-%s\n",getTableIndex(parts[0],symbolTable),parts[1]);
+                        code = code + String.format("(AD,04)\t(S,%02d)-%s\n",getSymbolIndex(parts[0]),parts[1]);
                     }
                     else {
                         try{
                             Integer.parseInt(expression);
                             code = code + String.format("(AD,04)\t(C,%s)\n",expression);
                         } catch (NumberFormatException e){
-                            code = code + String.format("(AD,04)\t(S,%02d)\n",getTableIndex(expression,symbolTable));
+                            code = code + String.format("(AD,04)\t(S,%02d)\n",getSymbolIndex(expression));
                         }
                     }
                     symbolTable.put(label,evaluate(expression));
                 }
                 else if(instruction.equals("LTORG")){
-                    poolTable.add(poolPointer+1);
-                    updateLiteralTable(false);
+                    poolTable.add(poolPointer);
+                    updateLiteralTable();
                 }
             break;
             case "DL":
@@ -144,15 +148,15 @@ public class Assembler {
                     } else {
                         if(tokens[i].contains("=")){
                             tokens[i] = tokens[i].replace("=","");
-                            literalTable.put(tokens[i],-1);
-                            code = code + String.format("(L,%02d)\t",getTableIndex(tokens[i],literalTable));
+                            currentPool.put(tokens[i],-1);
+                            code = code + String.format("(L,%02d)\t",getLiteralIndex(tokens[i]));
                         }
                         else if(symbolTable.containsKey(tokens[i])){
-                            code = code + String.format("(S,%02d)\t",getTableIndex(tokens[i],symbolTable));
+                            code = code + String.format("(S,%02d)\t",getSymbolIndex(tokens[i]));
                         }
                         else {
                             symbolTable.put(tokens[i],-1);
-                            code = code + String.format("(S,%02d)\t",getTableIndex(tokens[i],symbolTable));
+                            code = code + String.format("(S,%02d)\t",getSymbolIndex(tokens[i]));
                         }
                     }
                 }
@@ -198,9 +202,11 @@ public class Assembler {
 
         index = 1;
         bufferedWriter = new BufferedWriter(new FileWriter("LITERAL_TABLE.txt"));
-        for(String key: literalTable.keySet()){
-            bufferedWriter.write(index+"\t"+key+"\t"+literalTable.get(key)+"\n");
-            index++;
+        for(Map<String,Integer> pool : litTab){
+            for(String key: pool.keySet()){
+                bufferedWriter.write(index+"\t"+key+"\t"+pool.get(key)+"\n");
+                index++;
+            }
         }
         bufferedWriter.close();
 
@@ -214,20 +220,15 @@ public class Assembler {
 
     }
 
-    private void updateLiteralTable(boolean end){
-        int index = 0;
-        for(String literal : literalTable.keySet()){
-            if(poolPointer == index){
-                literalTable.put(literal, locationCounter);
-                if(!end)
-                    code = code + String.format("(AD,05)\t(DL,02)\t(C,%s)\n",literal);
-                else
-                    code = code + String.format("(DL,02)\t(C,%s)\n",literal);
-                poolPointer++;
-                locationCounter++;
-            }
-            index++;
+    private void updateLiteralTable(){
+        for(String literal : currentPool.keySet()){
+            currentPool.put(literal, locationCounter);
+            code = code + String.format("(DL,01)\t(C,%s)\n",literal);
+            poolPointer++;
+            locationCounter++;
         }
+        litTab.add(currentPool);
+        currentPool = new LinkedHashMap<>();
     }
 
 
@@ -250,11 +251,21 @@ public class Assembler {
         }
     }
 
-    private int getTableIndex(String entry, Map<String, Integer> table){
-        int index = 0;
-        for(String key : table.keySet()){
+    private int getSymbolIndex(String entry){
+        int index=1;
+        for(String key: symbolTable.keySet()){
             if(key.equals(entry))
-                return index+1;
+                return index;
+            index++;
+        }
+        return -1;
+    }
+
+    private int getLiteralIndex(String entry){
+        int index=0;
+        for(String key : currentPool.keySet()){
+            if(key.equals(entry))
+                return index+poolPointer;
             index++;
         }
         return -1;

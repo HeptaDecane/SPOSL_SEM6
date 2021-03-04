@@ -1,0 +1,3 @@
+0	#3	AREG
+2	#2	BREG
+2	#3	CREG

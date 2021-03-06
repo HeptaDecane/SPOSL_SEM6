@@ -2,12 +2,12 @@ package xyz.heptadecane;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Assembler {
-    private final Map<String,Integer> symbolTable;
-    private final Map<String,Integer> literalTable;
+    private final Map<Integer,Integer> symbolTable;
+    private final Map<Integer,Integer> literalTable;
     private String intermediateCodeFile, symbolTableFile, literalTableFile;
     private final ArrayList<Integer> opCode, register, address;
 
@@ -19,8 +19,8 @@ public class Assembler {
         this.intermediateCodeFile = intermediateCodeFile;
         this.symbolTableFile = symbolTableFile;
         this.literalTableFile = literalTableFile;
-        symbolTable = new LinkedHashMap<>();
-        literalTable = new LinkedHashMap<>();
+        symbolTable = new HashMap<>();
+        literalTable = new HashMap<>();
         opCode = new ArrayList<>();
         register = new ArrayList<>();
         address = new ArrayList<>();
@@ -51,45 +51,35 @@ public class Assembler {
         bufferedReader = new BufferedReader(new FileReader(symbolTableFile));
         while ((line=bufferedReader.readLine())!=null){
             tokens = line.split("\\s+");
-            symbolTable.put(tokens[1],Integer.parseInt(tokens[2]));
+            symbolTable.put(Integer.parseInt(tokens[0]),Integer.parseInt(tokens[2]));
         }
         bufferedReader.close();
 
         bufferedReader = new BufferedReader(new FileReader(literalTableFile));
         while ((line=bufferedReader.readLine())!=null){
             tokens = line.split("\\s+");
-            literalTable.put(tokens[1],Integer.parseInt(tokens[2]));
+            literalTable.put(Integer.parseInt(tokens[0]),Integer.parseInt(tokens[2]));
         }
         bufferedReader.close();
     }
 
-    private int evaluateAddress(String expression, Map<String,Integer> table){
+    private int evaluateAddress(String expression, Map<Integer,Integer> table){
         if(expression.contains("+")){
             String[] parts = expression.split("\\+");
             int index = Integer.parseInt(parts[0]);
             int offset = Integer.parseInt(parts[1]);
-            return getAddress(index,table) + offset;
+            return table.get(index) + offset;
         }
         else if(expression.contains("-")){
             String[] parts = expression.split("-");
             int index = Integer.parseInt(parts[0]);
             int offset = Integer.parseInt(parts[1]);
-            return getAddress(index,table) - offset;
+            return table.get(index) - offset;
         }
         else {
             int index = Integer.parseInt(expression);
-            return getAddress(index,table);
+            return table.get(index);
         }
-    }
-
-    private int getAddress(int index, Map<String,Integer> table){
-        int i=1;
-        for(String key : table.keySet()){
-            if(i==index)
-                return table.get(key);
-            i++;
-        }
-        return 0;
     }
 
 
@@ -109,7 +99,8 @@ public class Assembler {
             line = line.replace("(","");
             line = line.replace(")","");
 
-            interpret(line);
+            if(!line.contains("AD"))
+                interpret(line);
         }
         bufferedReader.close();
         generateOutput();
@@ -158,7 +149,7 @@ public class Assembler {
     private void generateOutput() throws Exception{
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("OBJECT_CODE.txt"));
         for(int i=0;i<opCode.size();i++)
-            bufferedWriter.write(String.format("(%02d)\t(%02d)\t(%03d)\n",opCode.get(i),register.get(i),address.get(i)));
+            bufferedWriter.write(String.format("%02d\t%02d\t%03d\n",opCode.get(i),register.get(i),address.get(i)));
         bufferedWriter.close();
 
     }

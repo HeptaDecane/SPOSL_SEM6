@@ -36,3 +36,13 @@ public class Main {
         }
     }
 }
+
+/*
+test01/INTERMEDIATE_CODE.txt
+test01/SYMBOL_TABLE.txt
+test01/LITERAL_TABLE.txt
+
+test02/INTERMEDIATE_CODE.txt
+test02/SYMBOL_TABLE.txt
+test02/LITERAL_TABLE.txt
+ */

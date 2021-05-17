@@ -1,3 +1,5 @@
+package xyz.heptadecane;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;

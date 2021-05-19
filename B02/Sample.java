@@ -7,7 +7,7 @@ public class Student {
 	private int marks;
  
  	// default constructor
-	public Student(){
+	public Student(){ 
 		roll = 20;
 		name = "Lorem Ipsum"
 		marks = 88;

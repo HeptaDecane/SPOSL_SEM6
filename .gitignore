@@ -15,3 +15,7 @@
 */out/
 */production/
 */.idea/
+
+# Output
+*.yy.c
+*.out
